@@ -1,0 +1,15 @@
+server:
+  port: 9002
+
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: userok
+    password: p@ssw0rd
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5435/warehousedb}
+    username: ${POSTGRES_USERNAME:zrs}
+    password: ${POSTGRES_PASSWORD:zrs}
+  jpa:
+    generate-ddl: true

@@ -1,0 +1,13 @@
+server:
+  port: 9001
+
+bot:
+  name: zrs-daily-bot
+  token: 7895907341:AAFq_6UAdtQWOTAVZvy2bD8LzPV2y1OocnI
+
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: userok
+    password: p@ssw0rd
