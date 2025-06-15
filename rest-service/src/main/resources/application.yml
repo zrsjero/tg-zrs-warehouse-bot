@@ -1,0 +1,12 @@
+server:
+  port: 9003
+
+spring:
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5435/warehousedb}
+    username: ${POSTGRES_USERNAME:zrs}
+    password: ${POSTGRES_PASSWORD:zrs}
+  jpa:
+    generate-ddl: true
+
+salt: alskghasldghksdjgh

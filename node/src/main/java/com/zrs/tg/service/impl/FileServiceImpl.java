@@ -1,5 +1,6 @@
 package com.zrs.tg.service.impl;
 
+import com.zrs.tg.CryptoTool;
 import com.zrs.tg.dao.AppDocumentRepository;
 import com.zrs.tg.dao.AppPhotoRepository;
 import com.zrs.tg.dao.BinaryContentRepository;
@@ -8,6 +9,7 @@ import com.zrs.tg.entity.AppPhoto;
 import com.zrs.tg.entity.BinaryContent;
 import com.zrs.tg.exceptions.UploadFileException;
 import com.zrs.tg.service.FileService;
+import com.zrs.tg.service.enums.LinkType;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,15 +39,19 @@ public class FileServiceImpl implements FileService {
     private String fileInfoUri;
     @Value("${service.file_storage.uri}")
     private String fileStorageUri;
+    @Value("${link.address}")
+    private String linkAddress;
     private final AppDocumentRepository appDocumentRepository;
     private final AppPhotoRepository appPhotoRepository;
     private final BinaryContentRepository binaryContentRepository;
+    private final CryptoTool cryptoTool;
 
     public FileServiceImpl(AppDocumentRepository appDocumentRepository, AppPhotoRepository appPhotoRepository,
-                           BinaryContentRepository binaryContentRepository) {
+                           BinaryContentRepository binaryContentRepository, CryptoTool cryptoTool) {
         this.appDocumentRepository = appDocumentRepository;
         this.appPhotoRepository = appPhotoRepository;
         this.binaryContentRepository = binaryContentRepository;
+        this.cryptoTool = cryptoTool;
     }
 
     @Override
@@ -64,8 +70,9 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public AppPhoto processPhoto(Message telegramMessage) {
-        // TODO пока что обрабатываем только одно фото в сообщении
-        PhotoSize telegramPhoto = telegramMessage.getPhoto().get(0);
+        var photoSizeCount = telegramMessage.getPhoto().size();
+        var photoIndex = photoSizeCount > 1 ? telegramMessage.getPhoto().size() - 1 : 0;
+        PhotoSize telegramPhoto = telegramMessage.getPhoto().get(photoIndex);
         String fileId = telegramPhoto.getFileId();
         ResponseEntity<String> response = getFilePath(fileId);
         if (response.getStatusCode() == HttpStatus.OK) {
@@ -75,6 +82,12 @@ public class FileServiceImpl implements FileService {
         } else {
             throw new UploadFileException("Bad response from telegram service: " + response);
         }
+    }
+
+    @Override
+    public String generateLink(Long docId, LinkType linkType) {
+        var hash = cryptoTool.hashOf(docId);
+        return "http://" + linkAddress + "/" + linkType + "?id=" + hash;
     }
 
     private BinaryContent getPersistentBinaryContent(ResponseEntity<String> response) {
