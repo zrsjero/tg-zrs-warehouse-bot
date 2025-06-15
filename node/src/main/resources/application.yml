@@ -13,3 +13,11 @@ spring:
     password: ${POSTGRES_PASSWORD:zrs}
   jpa:
     generate-ddl: true
+
+token: 7895907341:AAFq_6UAdtQWOTAVZvy2bD8LzPV2y1OocnI
+
+service:
+  file_info:
+    uri: https://api.telegram.org/bot{token}/getFile?file_id={fileId}
+  file_storage:
+    uri: https://api.telegram.org/file/bot{token}/{filePath}

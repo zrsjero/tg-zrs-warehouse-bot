@@ -2,10 +2,15 @@ package com.zrs.tg.service.impl;
 
 import com.zrs.tg.dao.AppUserRepository;
 import com.zrs.tg.dao.RawDataRepository;
+import com.zrs.tg.entity.AppDocument;
+import com.zrs.tg.entity.AppPhoto;
 import com.zrs.tg.entity.AppUser;
 import com.zrs.tg.entity.RawData;
+import com.zrs.tg.exceptions.UploadFileException;
+import com.zrs.tg.service.FileService;
 import com.zrs.tg.service.MainService;
 import com.zrs.tg.service.ProducerService;
+import com.zrs.tg.service.enums.ServiceCommand;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -28,13 +33,15 @@ public class MainServiceImpl implements MainService {
     private final RawDataRepository rawDataRepository;
     private final ProducerService producerService;
     private final AppUserRepository appUserRepository;
+    private final FileService fileService;
 
     public MainServiceImpl(RawDataRepository rawDataRepository,
                            ProducerService producerService,
-                           AppUserRepository appUserRepository) {
+                           AppUserRepository appUserRepository, FileService fileService) {
         this.rawDataRepository = rawDataRepository;
         this.producerService = producerService;
         this.appUserRepository = appUserRepository;
+        this.fileService = fileService;
     }
 
     @Override
@@ -45,12 +52,13 @@ public class MainServiceImpl implements MainService {
         var text = update.getMessage().getText();
         var output = "";
 
-        if (CANCEL.equals(text)) {
+        var serviceCommand = ServiceCommand.fromValue(text);
+        if (CANCEL.equals(serviceCommand)) {
             output = cancelProcess(appUser);
         } else if (BASIC_STATE.equals(userState)) {
             output = processServiceCommand(appUser, text);
         } else if (WAIT_FOR_EMAIL_STATE.equals(userState)) {
-            // output = appUserService.setEmail(appUser, text);
+            // TODO добавить обработку емейла
         } else {
             log.error("Unknown user state: " + userState);
             output = "Неизвестная ошибка! Введите /cancel и попробуйте снова!";
@@ -70,10 +78,12 @@ public class MainServiceImpl implements MainService {
         }
 
         try {
+            AppDocument doc = fileService.processDoc(update.getMessage());
+            // TODO Добавить генерацию ссылки для скачивания документа
             var answer = "Документ успешно загружен! "
-                    + "Ссылка для скачивания: " + "null";
+                    + "Ссылка для скачивания: http://test.ru/get-doc/777";
             sendAnswer(answer, chatId);
-        } catch (Exception ex) {
+        } catch (UploadFileException ex) {
             log.error("", ex);
             String error = "К сожалению, загрузка файла не удалась. Повторите попытку позже.";
             sendAnswer(error, chatId);
@@ -90,10 +100,12 @@ public class MainServiceImpl implements MainService {
         }
 
         try {
-            var answer = "Фоото успешно загружено! "
-                    + "Ссылка для скачивания: " + "null";
+            AppPhoto photo = fileService.processPhoto(update.getMessage());
+            // TODO добавить генерацию ссылки для скачивания фото
+            var answer = "Фото успешно загружено! "
+                    + "Ссылка для скачивания: http://test.ru/get-photo/777";
             sendAnswer(answer, chatId);
-        } catch (Exception ex) {
+        } catch (UploadFileException ex) {
             log.error("", ex);
             String error = "К сожалению, загрузка фото не удалась. Повторите попытку позже.";
             sendAnswer(error, chatId);
